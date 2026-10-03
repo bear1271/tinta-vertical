@@ -4,6 +4,12 @@
 
 Adds a simple Chinese vertical reading view to the Windows Markdown reader:
 
+## Download the Windows app
+
+Download **[Tinta-Vertical.zip](https://github.com/bear1271/tinta-vertical/releases/latest/download/Tinta-Vertical.zip)** from [Releases](https://github.com/bear1271/tinta-vertical/releases/latest), extract it, and run `Tinta-Vertical.exe`. The package includes the executable, MIT license and Chinese usage notes. No installation or toolchain is required. This is an unsigned Windows x64 portable build. GitHub's automatic **Source code** downloads contain source, not a runnable application.
+
+## Vertical reading features
+
 - **Ctrl+Shift+V** or the bottom-right button switches horizontal / vertical reading.
 - Vertical text runs top to bottom, with columns flowing right to left.
 - **Ctrl+F** searches and highlights vertical text; **Enter / Shift+Enter** navigates matches.
