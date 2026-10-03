@@ -38,7 +38,7 @@ std::wstring tintaConfigDir() {
     if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_APPDATA, nullptr, 0,
                                    appDataPath))) {
         std::wstring path = appDataPath;
-        path += L"\\Tinta";
+        path += L"\\TintaVertical";
         CreateDirectoryW(path.c_str(), nullptr);  // Create if not exists
         cached = path;
     }

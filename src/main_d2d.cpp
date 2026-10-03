@@ -1,3 +1,4 @@
+#include <filesystem>
 #include "frontmatter_ui.h"
 // Direct2D + DirectWrite renderer for Windows
 // Much faster startup than OpenGL
@@ -26,6 +27,7 @@
 #include "syntax.h"
 #include "search.h"
 #include "render.h"
+#include "vertical_reading.h"
 #include "file_utils.h"
 #include "overlays.h"
 #include "sidepanels.h"
@@ -101,6 +103,27 @@ void render(App& app) {
 
     app.renderTarget->BeginDraw();
     app.drawCalls = 0;
+    if (app.verticalReading && !app.editMode && !app.showPrintPreview) {
+        renderVerticalReading(app);
+        if (app.showSearch) { renderSearchOverlay(app); renderFolderSearchResults(app); }
+        if (app.showFolderBrowser) renderFolderBrowser(app);
+        if (app.showToc) renderToc(app);
+        renderSignalChips(app);
+        renderTabStrip(app);
+        if (app.showThemeChooser) renderThemeChooser(app);
+        if (app.showHelp) renderHelpOverlay(app);
+        if (app.showSettings) renderSettingsOverlay(app);
+        if (app.showLightbox) renderLightbox(app);
+        if (app.showThemeEditor) renderThemeEditor(app);
+        if (app.showShortcutEditor) renderShortcutEditor(app);
+        renderTabSwitcher(app);
+        renderTabMenu(app);
+        if (app.showContextMenu) renderContextMenu(app);
+        if (app.confirmExitPending) renderConfirmExitDialog(app);
+        if (app.createRefPending) renderCreateRefDialog(app);
+        app.renderTarget->EndDraw();
+        return;
+    }
 
     // Print preview replaces the whole frame: the document is in print
     // layout while it is open, so the normal paths would draw nonsense
@@ -1132,6 +1155,7 @@ render_document:
     if (app.confirmExitPending) renderConfirmExitDialog(app);
     if (app.createRefPending) renderCreateRefDialog(app);
 
+    drawReadingToggle(app);
     app.renderTarget->EndDraw();
 }
 
@@ -1494,6 +1518,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
 
         case WM_MOUSEWHEEL:
+            if (app && app->verticalReading && !app->editMode) {
+                turnVerticalPage(*app, GET_WHEEL_DELTA_WPARAM(wParam) < 0 ? 1 : -1);
+                return 0;
+            }
             if (app) handleMouseWheel(*app, hwnd, wParam, lParam);
             return 0;
 
@@ -1506,6 +1534,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             return 0;
 
         case WM_LBUTTONDOWN:
+            if (app && readingToggleClick(*app, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam))) return 0;
             if (app) handleMouseDown(*app, hwnd, wParam, lParam);
             return 0;
 
@@ -1583,6 +1612,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             break;
 
         case WM_KEYDOWN:
+            if (app && verticalReadingKey(*app, wParam)) return 1;
             if (app) return handleKeyDown(*app, hwnd, wParam) ? 1 : 0;
             return 0;
 
@@ -1999,7 +2029,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
         printPagesDir.empty() && exportHtmlPath.empty() &&
         exportDocxPath.empty() && exportPdfPath.empty() &&
         savedSettings.openInTabs) {
-        HWND existing = FindWindowW(L"Tinta", nullptr);
+        HWND existing = FindWindowW(L"Tinta (Vertical)", nullptr);
         if (existing) {
             // Resolve to an absolute path: the receiving window has its own
             // working directory
@@ -2058,7 +2088,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.hIcon = LoadIconW(hInstance, L"IDI_ICON1");
     wc.hIconSm = LoadIconW(hInstance, L"IDI_ICON1");
-    wc.lpszClassName = L"Tinta";
+    wc.lpszClassName = L"Tinta (Vertical)";
     RegisterClassExW(&wc);
 
     // Validate the saved window position against the monitors that exist
@@ -2105,8 +2135,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
 
     app.hwnd = CreateWindowExW(
         WS_EX_ACCEPTFILES,
-        L"Tinta",
-        L"Tinta",
+        L"Tinta (Vertical)",
+        L"Tinta (Vertical)",
         WS_OVERLAPPEDWINDOW,
         windowX, windowY,
         savedSettings.windowWidth, savedSettings.windowHeight,
@@ -2172,7 +2202,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     auto loadFile = [&](const std::string& path) -> bool {
         // Use wide string path for ifstream to support non-ASCII paths (MSVC extension)
         std::wstring widePath = toWide(path);
-        std::ifstream file(widePath);
+        std::ifstream file(std::filesystem::path{widePath});
         if (!file) return false;
         std::stringstream buffer;
         buffer << file.rdbuf();

@@ -1,3 +1,4 @@
+#include <filesystem>
 // DOCX export (#export_as): walks the parsed element tree and packs OOXML
 // into a stored zip written by hand (no third-party code). Text, lists,
 // tables, quotes, and alerts map to WordprocessingML with the active theme
@@ -167,7 +168,7 @@ std::string hexOver(D2D1_COLOR_F c, D2D1_COLOR_F background) {
 }
 
 bool readBinaryFile(const std::wstring& path, std::string& out) {
-    std::ifstream in(path, std::ios::binary);
+    std::ifstream in(std::filesystem::path{path}, std::ios::binary);
     if (!in) return false;
     std::ostringstream ss;
     ss << in.rdbuf();
@@ -1507,7 +1508,7 @@ bool exportDocxFile(App& app, const std::wstring& path) {
     }
     std::string package = zip.finish();
 
-    std::ofstream out(path, std::ios::binary);
+    std::ofstream out(std::filesystem::path{path}, std::ios::binary);
     if (!out) return false;
     out.write(package.data(), package.size());
     return out.good();
@@ -1609,7 +1610,7 @@ bool clipboardImageToPngFile(App& app, HWND hwnd, const std::wstring& path) {
             std::string png = encodeWicPng(app, bitmap, w, h);
             bitmap->Release();
             if (!png.empty()) {
-                std::ofstream out(path, std::ios::binary | std::ios::trunc);
+                std::ofstream out(std::filesystem::path{path}, std::ios::binary | std::ios::trunc);
                 if (out) {
                     out.write(png.data(), (std::streamsize)png.size());
                     ok = out.good();

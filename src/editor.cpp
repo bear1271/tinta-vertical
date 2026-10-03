@@ -816,7 +816,7 @@ static void scheduleReparse(App& app) {
         size_t lastSep = wpath.find_last_of(L"\\/");
         std::wstring fname = (lastSep != std::wstring::npos) ? wpath.substr(lastSep + 1) : wpath;
         if (fname.empty()) fname = tr(app, "title.untitled");  // quick note
-        std::wstring title = L"Tinta - * " + fname;
+        std::wstring title = L"Tinta (Vertical) - * " + fname;
         SetWindowTextW(app.hwnd, title.c_str());
     }
     // No preview pane — nothing to keep in sync until it's shown again
@@ -1022,7 +1022,7 @@ void enterEditMode(App& app) {
 
     // Load raw file content
     std::wstring widePath = toWide(app.currentFile);
-    std::ifstream file(widePath, std::ios::binary);
+    std::ifstream file(std::filesystem::path{widePath}, std::ios::binary);
     if (!file) return;
 
     std::stringstream buf;
@@ -1034,7 +1034,7 @@ void enterQuickNoteMode(App& app) {
     app.currentFile.clear();
     app.startPageEmbeddedOpen = false;  // the note replaces any Learn doc
     enterEditModeWithContent(app, std::string());
-    updateWindowTitle(app);  // "Tinta - Untitled" until the first save
+    updateWindowTitle(app);  // "Tinta (Vertical) - Untitled" until the first save
 }
 
 // Draft recovery: a crash leftover reopens as a dirty edit tab, pointed
@@ -1091,7 +1091,7 @@ void exitEditMode(App& app) {
     // note has no file — reset the viewer to an empty document instead of
     // leaving the discarded text rendered.
     std::wstring widePath = toWide(app.currentFile);
-    std::ifstream file(widePath);
+    std::ifstream file(std::filesystem::path{widePath});
     if (app.currentFile.empty()) {
         auto result = parseDocument(app.parser, std::string(), app.currentFile);
         if (result.success) {
@@ -1371,7 +1371,7 @@ void saveEditorFile(App& app, HWND hwnd) {
     std::wstring widePath = toWide(app.currentFile);
     bool useCRLF = false;
     {
-        std::ifstream check(widePath, std::ios::binary);
+        std::ifstream check(std::filesystem::path{widePath}, std::ios::binary);
         if (check) {
             char buf[4096];
             check.read(buf, sizeof(buf));
@@ -1397,7 +1397,7 @@ void saveEditorFile(App& app, HWND hwnd) {
         utf8 = std::move(crlf);
     }
 
-    std::ofstream out(widePath, std::ios::binary);
+    std::ofstream out(std::filesystem::path{widePath}, std::ios::binary);
     if (out) {
         out.write(utf8.data(), utf8.size());
         out.close();

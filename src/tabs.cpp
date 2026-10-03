@@ -96,7 +96,7 @@ void tabsInit(App& app) {
     tab.path = app.currentFile;
     tab.title = titleForPath(app, app.currentFile);
     // A pathless viewer tab is the start page, not an untitled note
-    if (app.currentFile.empty() && !app.editMode) tab.title = L"Tinta";
+    if (app.currentFile.empty() && !app.editMode) tab.title = L"Tinta (Vertical)";
     app.tabs.push_back(std::move(tab));
     app.activeTab = 0;
 }
@@ -161,7 +161,7 @@ void tabActivate(App& app, HWND hwnd, int index) {
         // An empty viewer tab in a launcher window shows the start page
         // again; its label follows suit
         if (!tab.editMode && startPageActive(app)) {
-            tab.title = L"Tinta";
+            tab.title = L"Tinta (Vertical)";
         }
     }
     if (tab.editMode) {
@@ -277,7 +277,7 @@ void tabBecomeStartPage(App& app, HWND hwnd) {
     App::DocTab& tab = app.tabs[app.activeTab];
     draftsDeleteForTab(app, tab.id);
     tab.path.clear();
-    tab.title = L"Tinta";
+    tab.title = L"Tinta (Vertical)";
     tab.editMode = false;
     tab.editorDirty = false;
     tab.editorText.clear();
@@ -304,7 +304,7 @@ void tabOpenStartPage(App& app, HWND hwnd) {
     parkActiveEditBuffer(app);
     App::DocTab tab;
     tab.id = ++app.tabIdCounter;
-    tab.title = L"Tinta";
+    tab.title = L"Tinta (Vertical)";
     app.tabs.push_back(std::move(tab));
     app.activeTab = (int)app.tabs.size() - 1;
     app.currentFile.clear();
@@ -630,7 +630,7 @@ void renderTabStrip(App& app) {
     if (tabless) {
         // Single document: the caption shows the plain window title, with
         // the + button right after it so the tab row is discoverable
-        std::wstring title = L"Tinta";
+        std::wstring title = L"Tinta (Vertical)";
         if (!app.tabs.empty() && !app.tabs[0].title.empty() &&
             !startPageActive(app)) {
             title = app.tabs[0].title;
@@ -1698,7 +1698,7 @@ void tabDragEnd(App& app, HWND hwnd, int x, int y) {
         wchar_t className[16] = {};
         if (root && root != hwnd &&
             GetClassNameW(root, className, _countof(className)) &&
-            wcscmp(className, L"Tinta") == 0) {
+            wcscmp(className, L"Tinta (Vertical)") == 0) {
             if (tabSendDrop(root, path, screen)) {
                 SetForegroundWindow(root);
                 dragCloseLocal(app, hwnd, index);
@@ -1737,8 +1737,8 @@ void tabWindowDropMerge(App& app, HWND hwnd) {
     HWND target = nullptr;
     // Top-level Tinta windows in z-order; the first one under the cursor
     // (other than us) is the drop candidate
-    for (HWND w = FindWindowExW(nullptr, nullptr, L"Tinta", nullptr); w;
-         w = FindWindowExW(nullptr, w, L"Tinta", nullptr)) {
+    for (HWND w = FindWindowExW(nullptr, nullptr, L"Tinta (Vertical)", nullptr); w;
+         w = FindWindowExW(nullptr, w, L"Tinta (Vertical)", nullptr)) {
         if (w == hwnd || !IsWindowVisible(w) || IsIconic(w)) continue;
         RECT r;
         if (!GetWindowRect(w, &r) || !PtInRect(&r, cursor)) continue;

@@ -1,3 +1,4 @@
+#include <filesystem>
 #include "drafts.h"
 #include "i18n.h"
 #include "settings.h"
@@ -39,7 +40,7 @@ static void writeDraft(const std::wstring& draftPath,
                        const std::string& origPath,
                        const std::wstring& text) {
     if (draftPath.empty()) return;
-    std::ofstream out(draftPath, std::ios::binary);
+    std::ofstream out(std::filesystem::path{draftPath}, std::ios::binary);
     if (!out) return;
     std::string header = "<!-- tinta-draft:" + origPath + " -->\n";
     std::string body = toUtf8(text);
@@ -128,7 +129,7 @@ void draftsScanForRecovery(App& app) {
 
 void draftsRecoverAll(App& app, HWND hwnd) {
     for (const std::wstring& path : app.recoveredDrafts) {
-        std::ifstream file(path, std::ios::binary);
+        std::ifstream file(std::filesystem::path{path}, std::ios::binary);
         if (!file) continue;
         std::stringstream buf;
         buf << file.rdbuf();

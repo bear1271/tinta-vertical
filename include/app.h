@@ -418,6 +418,17 @@ struct App {
     // Markdown
     MarkdownParser parser;
     ElementPtr root;
+    // Personal Chinese prose reader; independent of the normal Markdown layout.
+    bool verticalReading = false;
+    std::wstring verticalText;
+    float verticalContentTop = 60;
+    float verticalOffset = 0;
+    float verticalExtent = 0;
+    float verticalPageWidth = 1;
+    ElementPtr verticalRoot;
+    Microsoft::WRL::ComPtr<IDWriteTextLayout> verticalLayout;
+    int verticalWidth = 0, verticalHeight = 0;
+    float verticalFontSize = 0;
     std::string currentFile;
     bool focusMermaidOnNextLayout = false;
     size_t parseTimeUs = 0;

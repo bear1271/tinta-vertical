@@ -242,7 +242,7 @@ void handleSelectScrollTimer(App& app, HWND hwnd) {
 // Loads a document into the viewer and resets per-document state.
 // Shared by the folder browser's item clicks, path input, and new-file flow.
 bool openDocumentInViewer(App& app, const std::wstring& fullPath) {
-    std::ifstream file(fullPath);
+    std::ifstream file(std::filesystem::path{fullPath});
     if (!file) return false;
     std::stringstream buffer;
     buffer << file.rdbuf();
@@ -567,7 +567,7 @@ static void openThemesIniFile() {
     if (slash == std::wstring::npos) return;
     p = p.substr(0, slash + 1) + L"themes.ini";
     if (GetFileAttributesW(p.c_str()) == INVALID_FILE_ATTRIBUTES) {
-        std::ofstream f(p);
+        std::ofstream f(std::filesystem::path{p});
         f << "; Custom themes: [theme] sections, RRGGBB colors.\n";
     }
     ShellExecuteW(nullptr, L"open", configFilePathForShell(p).c_str(),
@@ -1345,6 +1345,12 @@ void handleMouseMove(App& app, HWND hwnd, LPARAM lParam) {
         // but we leave the existing code to work with document coordinates
     }
 
+    if (app.verticalReading && !app.editMode && !app.showPrintPreview) {
+        app.hoveredLink.clear();
+        app.overText = false;
+        SetCursor(cursorArrow);
+        return;
+    }
     float previewOffsetX = documentViewportX(app);
     float docX = (app.mouseX - previewOffsetX) + app.scrollX;
     float docY = app.mouseY + app.scrollY;
@@ -2151,6 +2157,11 @@ void handleMouseDown(App& app, HWND hwnd, WPARAM, LPARAM lParam) {
         }
     }
 
+    // Vertical prose has its own layout; chrome and search above still receive input.
+    if (app.verticalReading && !app.editMode && !app.showPrintPreview) {
+        app.swallowNextMouseUp = true;
+        return;
+    }
     app.mouseDown = true;
     app.mouseX = GET_X_LPARAM(lParam);
     app.mouseY = GET_Y_LPARAM(lParam);
@@ -2349,7 +2360,7 @@ static void offerCreateFileRef(App& app, const std::string& url) {
     if (qmd::fileRefIsExternal(path)) {
         auto wide = toWide(path);
         signalPushKey(app, SIG_WARN, SIGI_FILE, "toast.file_missing",
-                      std::filesystem::path(wide).filename().wstring(), wide);
+                      std::filesystem::path{wide}.filename().wstring(), wide);
         return;
     }
     app.createRefPath = std::move(path);
@@ -2377,7 +2388,7 @@ static bool openFileRefTarget(App& app, HWND hwnd, const std::string& url) {
                 ? "toast.file_missing" : error == ERROR_NO_ASSOCIATION
                 ? "toast.file_no_app" : "toast.file_open_failed";
             signalPushKey(app, SIG_ERROR, SIGI_FILE, message,
-                          std::filesystem::path(wide).filename().wstring(), wide);
+                          std::filesystem::path{wide}.filename().wstring(), wide);
         }
         return false;
     }
@@ -2486,7 +2497,7 @@ static void createRefAction(App& app, HWND hwnd, int action) {
         if (target.has_parent_path()) {
             std::filesystem::create_directories(target.parent_path(), ec);
         }
-        std::ofstream out(target, std::ios::binary);
+        std::ofstream out(std::filesystem::path{target}, std::ios::binary);
         if (out) {
             out.close();
             // The layout cached this path as missing; the ghost turns live
@@ -2573,7 +2584,7 @@ static const App::TaskRect* taskRectAt(const App& app) {
 static void toggleTaskOnDisk(App& app, HWND hwnd, size_t markOffset, bool wasChecked) {
     if (app.currentFile.empty()) return;
     std::wstring widePath = toWide(app.currentFile);
-    std::ifstream in(widePath, std::ios::binary);
+    std::ifstream in(std::filesystem::path{widePath}, std::ios::binary);
     if (!in) return;
     std::string disk((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     in.close();
@@ -2593,7 +2604,7 @@ static void toggleTaskOnDisk(App& app, HWND hwnd, size_t markOffset, bool wasChe
     }
     disk[diskPos] = checked ? ' ' : 'x';
 
-    std::ofstream out(widePath, std::ios::binary | std::ios::trunc);
+    std::ofstream out(std::filesystem::path{widePath}, std::ios::binary | std::ios::trunc);
     if (!out) return;
     out.write(disk.data(), (std::streamsize)disk.size());
     out.close();
@@ -4409,7 +4420,7 @@ void handleFileWatchTimer(App& app, HWND hwnd) {
         if (CompareFileTime(&ft, &app.lastFileWriteTime) != 0) {
             app.lastFileWriteTime = ft;
             // Reload file
-            std::ifstream file(widePath);
+            std::ifstream file(std::filesystem::path{widePath});
             if (file) {
                 std::stringstream buffer;
                 buffer << file.rdbuf();

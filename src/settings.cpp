@@ -1,3 +1,4 @@
+#include <filesystem>
 #include "settings.h"
 #include "document.h"
 #include "i18n.h"
@@ -30,7 +31,7 @@ void saveSettings(const Settings& settings) {
     std::wstring path = getSettingsPath();
     if (path.empty()) return;
 
-    std::ofstream file(path);
+    std::ofstream file(std::filesystem::path{path});
     if (!file) return;
 
     file << "[Settings]\n";
@@ -223,7 +224,7 @@ Settings loadSettings() {
     std::wstring path = getSettingsPath();
     if (path.empty()) return settings;
 
-    std::ifstream file(path);
+    std::ifstream file(std::filesystem::path{path});
     if (!file) return settings;
 
     bool sawKeyProfile = false, sawFrontmatterRules = false;
@@ -414,7 +415,7 @@ static bool hasRegisteredFileAssociation(std::wstring_view extension) {
     HKEY hKey;
     LONG result = RegOpenKeyExW(
         HKEY_CURRENT_USER,
-        L"Software\\Tinta\\Capabilities\\FileAssociations",
+        L"Software\\TintaVertical\\Capabilities\\FileAssociations",
         0, KEY_READ, &hKey);
     if (result != ERROR_SUCCESS) return false;
 
@@ -427,7 +428,7 @@ static bool hasRegisteredFileAssociation(std::wstring_view extension) {
     RegCloseKey(hKey);
     return result == ERROR_SUCCESS &&
         type == REG_SZ &&
-        wcscmp(value, L"Tinta.MarkdownFile") == 0;
+        wcscmp(value, L"Tinta.VerticalReader") == 0;
 }
 
 bool registerFileAssociation() {
@@ -437,18 +438,18 @@ bool registerFileAssociation() {
 
     HKEY hKey;
     LONG result;
-    const wchar_t* progId = L"Tinta.MarkdownFile";
+    const wchar_t* progId = L"Tinta.VerticalReader";
 
     // Create ProgID entry in Classes
-    result = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Classes\\Tinta.MarkdownFile", 0, nullptr,
+    result = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Classes\\Tinta.VerticalReader", 0, nullptr,
                               REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr);
     if (result != ERROR_SUCCESS) return false;
-    const wchar_t* desc = L"Tinta Document";
+    const wchar_t* desc = L"Tinta (Vertical) Document";
     RegSetValueExW(hKey, nullptr, 0, REG_SZ, (BYTE*)desc, (DWORD)((wcslen(desc) + 1) * sizeof(wchar_t)));
     RegCloseKey(hKey);
 
     // Create DefaultIcon entry
-    result = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Classes\\Tinta.MarkdownFile\\DefaultIcon", 0, nullptr,
+    result = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Classes\\Tinta.VerticalReader\\DefaultIcon", 0, nullptr,
                               REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr);
     if (result != ERROR_SUCCESS) return false;
     std::wstring iconPath = exePath;
@@ -457,7 +458,7 @@ bool registerFileAssociation() {
     RegCloseKey(hKey);
 
     // Create shell\open\command entry
-    result = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Classes\\Tinta.MarkdownFile\\shell\\open\\command", 0, nullptr,
+    result = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Classes\\Tinta.VerticalReader\\shell\\open\\command", 0, nullptr,
                               REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr);
     if (result != ERROR_SUCCESS) return false;
     std::wstring command = L"\"";
@@ -467,17 +468,17 @@ bool registerFileAssociation() {
     RegCloseKey(hKey);
 
     // Register app capabilities (required for Windows 10/11)
-    result = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Tinta\\Capabilities", 0, nullptr,
+    result = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\TintaVertical\\Capabilities", 0, nullptr,
                               REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr);
     if (result != ERROR_SUCCESS) return false;
-    const wchar_t* appName = L"Tinta";
+    const wchar_t* appName = L"Tinta (Vertical)";
     const wchar_t* appDesc = L"A fast, lightweight Markdown and Mermaid reader";
     RegSetValueExW(hKey, L"ApplicationName", 0, REG_SZ, (BYTE*)appName, (DWORD)((wcslen(appName) + 1) * sizeof(wchar_t)));
     RegSetValueExW(hKey, L"ApplicationDescription", 0, REG_SZ, (BYTE*)appDesc, (DWORD)((wcslen(appDesc) + 1) * sizeof(wchar_t)));
     RegCloseKey(hKey);
 
     // Register file associations in capabilities
-    result = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Tinta\\Capabilities\\FileAssociations", 0, nullptr,
+    result = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\TintaVertical\\Capabilities\\FileAssociations", 0, nullptr,
                               REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr);
     if (result != ERROR_SUCCESS) return false;
     for (std::wstring_view extension : DOCUMENT_FILE_EXTENSIONS) {
@@ -495,8 +496,8 @@ bool registerFileAssociation() {
     result = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\RegisteredApplications", 0, nullptr,
                               REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr);
     if (result != ERROR_SUCCESS) return false;
-    const wchar_t* capPath = L"Software\\Tinta\\Capabilities";
-    RegSetValueExW(hKey, L"Tinta", 0, REG_SZ, (BYTE*)capPath, (DWORD)((wcslen(capPath) + 1) * sizeof(wchar_t)));
+    const wchar_t* capPath = L"Software\\TintaVertical\\Capabilities";
+    RegSetValueExW(hKey, L"Tinta (Vertical)", 0, REG_SZ, (BYTE*)capPath, (DWORD)((wcslen(capPath) + 1) * sizeof(wchar_t)));
     RegCloseKey(hKey);
 
     for (std::wstring_view extension : DOCUMENT_FILE_EXTENSIONS) {

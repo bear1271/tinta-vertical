@@ -49,6 +49,7 @@ set(SOURCES
     src/search.cpp
     src/search_input.cpp
     src/render.cpp
+    src/vertical_reading.cpp
     src/image_loader.cpp
     src/file_utils.cpp
     src/overlays.cpp
@@ -147,6 +148,12 @@ target_compile_definitions(tinta PRIVATE UNICODE _UNICODE
     TINTA_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
     TINTA_VERSION_MINOR=${PROJECT_VERSION_MINOR}
     TINTA_VERSION_PATCH=${PROJECT_VERSION_PATCH})
+
+if(MINGW)
+    target_compile_definitions(tinta PRIVATE NOMINMAX _WIN32_WINNT=0x0A00 WINVER=0x0A00)
+    target_link_options(tinta PRIVATE -static)
+    target_link_libraries(tinta PRIVATE winhttp dbghelp uuid)
+endif()
 
 if(BUILD_TESTING)
     add_executable(keymap_tests tests/keymap_tests.cpp src/keymap.cpp)

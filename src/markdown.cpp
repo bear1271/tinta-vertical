@@ -1,3 +1,4 @@
+#include <filesystem>
 #include "markdown.h"
 #include "footnotes.h"
 #include <cstdint>
@@ -1099,7 +1100,7 @@ ParseResult MarkdownParser::parse(const std::string& markdown) {
 ParseResult MarkdownParser::parseFile(const std::string& path) {
     ParseResult result;
 
-    std::ifstream file(path, std::ios::binary);
+    std::ifstream file(std::filesystem::path{path}, std::ios::binary);
     if (!file) {
         result.success = false;
         result.error = "Failed to open file: " + path;

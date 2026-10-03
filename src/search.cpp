@@ -1,6 +1,7 @@
 #include "search.h"
 #include "utils.h"
 #include "render.h"
+#include "vertical_reading.h"
 
 #include <algorithm>
 #include <cwctype>
@@ -130,6 +131,17 @@ void performSearch(App& app) {
     }
 
     if (app.searchQuery.empty() || !app.root) return;
+    if (app.verticalReading && !app.editMode) {
+        prepareVerticalReading(app);
+        const auto text = toLower(app.verticalText);
+        const auto query = toLower(app.searchQuery);
+        size_t pos=0;
+        while ((pos=text.find(query,pos)) != std::wstring::npos) {
+            app.searchMatches.push_back({kNoTextRect,pos,query.size(),{}});
+            pos+=query.size();
+        }
+        return;
+    }
 
     // docText and textRects must cover the whole document before searching
     ensureLayoutComplete(app);
@@ -164,6 +176,7 @@ void performSearch(App& app) {
 }
 
 void mapSearchMatchesToLayout(App& app) {
+    if (app.verticalReading && !app.editMode) return;
     for (auto& match : app.searchMatches) {
         match.textRectIndex = kNoTextRect;
         match.highlightRect = D2D1::RectF(0, 0, 0, 0);
@@ -234,6 +247,18 @@ void scrollToCurrentMatch(App& app) {
         app.searchCurrentIndex >= (int)app.searchMatches.size()) return;
 
     const auto& match = app.searchMatches[app.searchCurrentIndex];
+    if (app.verticalReading && !app.editMode) {
+        prepareVerticalReading(app);
+        if (!app.verticalLayout) return;
+        FLOAT x,y; DWRITE_HIT_TEST_METRICS hit{};
+        if (FAILED(app.verticalLayout->HitTestTextPosition((UINT32)match.startPos,FALSE,&x,&y,&hit))) return;
+        DWRITE_TEXT_METRICS metrics{}; app.verticalLayout->GetMetrics(&metrics);
+        const float distance=std::max(0.0f,metrics.left+metrics.width-hit.left-hit.width*0.5f);
+        const float last=std::floor(std::max(0.0f,app.verticalExtent-0.1f)/app.verticalPageWidth)*app.verticalPageWidth;
+        app.verticalOffset=std::min(last,std::floor(distance/app.verticalPageWidth)*app.verticalPageWidth);
+        InvalidateRect(app.hwnd,nullptr,FALSE);
+        return;
+    }
 
     bool hasLayoutBounds = match.textRectIndex != kNoTextRect;
     float estimatedY = hasLayoutBounds ? match.highlightRect.top : -1.0f;

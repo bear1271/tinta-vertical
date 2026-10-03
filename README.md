@@ -1,3 +1,26 @@
+# Tinta (Vertical)
+
+**Unofficial fork** of [oipoistar/tinta](https://github.com/oipoistar/tinta), based on Tinta 3.7.4. This project is maintained independently and is not the official Tinta release.
+
+Adds a simple Chinese vertical reading view to the Windows Markdown reader:
+
+- **Ctrl+Shift+V** or the bottom-right button switches horizontal / vertical reading.
+- Vertical text runs top to bottom, with columns flowing right to left.
+- **Ctrl+F** searches and highlights vertical text; **Enter / Shift+Enter** navigates matches.
+- The title-bar pin keeps the window on top in either reading mode.
+- Separate window identification, application naming and fallback settings directory distinguish this fork from official Tinta.
+
+Vertical mode is intended for prose. Tables and code are flattened to text; images, ruby text and diagrams have no dedicated vertical layout. Text selection, inline styles and links are not fully supported in this view. Switch to horizontal mode for editing and other document operations. Reading positions are retained separately, not synchronized between modes.
+
+See [中文使用与构建说明](竖排版说明.md) for controls, reproducible build/test instructions and validation limits. Source and tests are included; local binaries, toolchains, personal settings and reading material are excluded.
+
+## Attribution and license
+
+Original Tinta is by **oipoistar**. The original copyright notice and [MIT license](LICENSE) are retained. Changes in this fork are also distributed under MIT. Official downloads and upstream documentation below refer to **the original project**, not this custom build.
+
+---
+
+## Original upstream README
 <div align="center">
   <img src="resources/tinta.ico" width="80">
   <h1>Tinta</h1>

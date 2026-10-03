@@ -1,3 +1,4 @@
+#include <filesystem>
 // HTML export (#export_as): walks the parsed element tree and emits one
 // standalone .html with the active theme's palette inlined. Mermaid
 // diagrams re-run their native parsers and come out as inline SVG; math
@@ -110,7 +111,7 @@ const char* mimeForPath(const std::string& path) {
 }
 
 bool readBinary(const std::wstring& path, std::string& out) {
-    std::ifstream in(path, std::ios::binary);
+    std::ifstream in(std::filesystem::path{path}, std::ios::binary);
     if (!in) return false;
     std::ostringstream ss;
     ss << in.rdbuf();
@@ -1445,7 +1446,7 @@ bool exportHtmlFile(App& app, const std::wstring& path) {
     walk(ctx, app.root);
     ctx.out += "</body>\n</html>\n";
 
-    std::ofstream out(path, std::ios::binary);
+    std::ofstream out(std::filesystem::path{path}, std::ios::binary);
     if (!out) return false;
     out.write(ctx.out.data(), ctx.out.size());
     return out.good();

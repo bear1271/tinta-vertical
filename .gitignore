@@ -1,5 +1,7 @@
 # Build
 build/
+.toolchain/
+toolchain.zip
 out/
 cmake-build-*/
 
